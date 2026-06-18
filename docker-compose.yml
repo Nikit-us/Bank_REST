@@ -1,9 +1,40 @@
-# 
-# docker-compose.yml — определяет сервисы для разработки и тестирования.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: bank-rest-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-bank_rest}
+      POSTGRES_USER: ${POSTGRES_USER:-bank}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bank}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - bank_rest_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bank} -d ${POSTGRES_DB:-bank_rest}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-Что нужно сделать:
-  - Настроить сервисы для:
-      - PostgreSQL (или MySQL) с начальной базой.
-      - Приложения Spring Boot (если нужно).
-  - Открыть нужные порты (например, 5432, 8080).
-  - Настроить volume для хранения данных БД.
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bank-rest-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-bank_rest}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-bank}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-bank}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-ltra1IMr5up2W4VzqL6HWU3d5fZu3PpbtHNg9E8hMisgotJR/Co1jFK+grFi2Dst}
+      APP_JWT_EXPIRATION_MS: ${APP_JWT_EXPIRATION_MS:-3600000}
+      APP_ENCRYPTION_PASSWORD: ${APP_ENCRYPTION_PASSWORD:-nFHxHMEsXJOhrCUpYhI8o/9fNxCcCZ5F}
+      APP_ENCRYPTION_SALT: ${APP_ENCRYPTION_SALT:-58fccc618bb9c69c}
+      APP_ENCRYPTION_HMAC_KEY: ${APP_ENCRYPTION_HMAC_KEY:-aaIWNTXqFOQfOmtviW/qSQHjRbc4SBb2g4//wyKoBxw=}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+
+volumes:
+  bank_rest_pgdata:

@@ -1,0 +1,77 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-seed-users
+      author: bank-rest
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: admin
+              - column:
+                  name: password_hash
+                  value: $2a$10$GRW6JAAPd4NL3Y/r5JTzB.cn/65qZXZv5nsgG6S.2ckcw//xcukhS
+              - column:
+                  name: full_name
+                  value: System Administrator
+              - column:
+                  name: role
+                  value: ADMIN
+              - column:
+                  name: enabled
+                  valueBoolean: true
+              - column:
+                  name: created_at
+                  valueDate: 2026-01-01T00:00:00
+              - column:
+                  name: updated_at
+                  valueDate: 2026-01-01T00:00:00
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: user
+              - column:
+                  name: password_hash
+                  value: $2a$10$/KkBIYUEK10PsYah.n44dOqCbdtEMiemkQf.EySFfPcxEd.p3EelW
+              - column:
+                  name: full_name
+                  value: Demo User
+              - column:
+                  name: role
+                  value: USER
+              - column:
+                  name: enabled
+                  valueBoolean: true
+              - column:
+                  name: created_at
+                  valueDate: 2026-01-01T00:00:00
+              - column:
+                  name: updated_at
+                  valueDate: 2026-01-01T00:00:00
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: user2
+              - column:
+                  name: password_hash
+                  value: $2a$10$uUlnFeyb6HNqLEQ2f1f4EePGc.9qA/b1Vss16SZzAeHjPuu8jV4lq
+              - column:
+                  name: full_name
+                  value: Second Demo User
+              - column:
+                  name: role
+                  value: USER
+              - column:
+                  name: enabled
+                  valueBoolean: true
+              - column:
+                  name: created_at
+                  valueDate: 2026-01-01T00:00:00
+              - column:
+                  name: updated_at
+                  valueDate: 2026-01-01T00:00:00

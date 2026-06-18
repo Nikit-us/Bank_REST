@@ -1,1 +1,497 @@
-# Здесь будет OpenAPI описание всех доступных эндпоинтов и моделей данных.
+openapi: 3.0.3
+info:
+  title: Bank Card Management API
+  version: 1.0.0
+  description: >-
+    REST API for managing bank cards, users and money transfers.
+    Authentication uses JWT bearer tokens; the supported roles are ADMIN and USER.
+
+    This file is a snapshot of the specification. The running application always serves the
+    live version: JSON at `/v3/api-docs`, with an interactive view in Swagger UI at
+    `/swagger-ui.html`.
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+tags:
+  - name: Authentication
+    description: Login and JWT issuance
+  - name: Users
+    description: Administer application users (ADMIN only)
+  - name: Cards
+    description: Card management, viewing and transfers
+
+paths:
+  /api/v1/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Authenticate and obtain a JWT access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/users:
+    post:
+      tags: [Users]
+      summary: Create a new user
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    get:
+      tags: [Users]
+      summary: List users (paginated)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Size' }
+        - { $ref: '#/components/parameters/Sort' }
+      responses:
+        '200':
+          description: Page of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageUserResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/users/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/IdPath' }
+    get:
+      tags: [Users]
+      summary: Get a user by id
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: User
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserResponse' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Users]
+      summary: Update a user (partial; null fields ignored)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateUserRequest' }
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Users]
+      summary: Delete a user
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/cards:
+    post:
+      tags: [Cards]
+      summary: Issue a new card for a user (ADMIN)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateCardRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CardResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    get:
+      tags: [Cards]
+      summary: List all cards with optional status filter and last-four search (ADMIN)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/StatusFilter' }
+        - { $ref: '#/components/parameters/SearchFilter' }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Size' }
+        - { $ref: '#/components/parameters/Sort' }
+      responses:
+        '200':
+          description: Page of cards
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PageCardResponse' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/v1/cards/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/IdPath' }
+    get:
+      tags: [Cards]
+      summary: Get any card by id (ADMIN)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Card
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CardResponse' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Cards]
+      summary: Delete a card (ADMIN)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/cards/{id}/block:
+    parameters:
+      - { $ref: '#/components/parameters/IdPath' }
+    post:
+      tags: [Cards]
+      summary: Block a card (ADMIN)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Card
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CardResponse' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/cards/{id}/activate:
+    parameters:
+      - { $ref: '#/components/parameters/IdPath' }
+    post:
+      tags: [Cards]
+      summary: Activate a card (ADMIN)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Card
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CardResponse' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+
+  /api/v1/cards/my:
+    get:
+      tags: [Cards]
+      summary: List my cards with optional status filter and last-four search (USER)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/StatusFilter' }
+        - { $ref: '#/components/parameters/SearchFilter' }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Size' }
+        - { $ref: '#/components/parameters/Sort' }
+      responses:
+        '200':
+          description: Page of cards
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PageCardResponse' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/v1/cards/my/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/IdPath' }
+    get:
+      tags: [Cards]
+      summary: Get one of my cards (USER)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Card
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CardResponse' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/cards/my/{id}/balance:
+    parameters:
+      - { $ref: '#/components/parameters/IdPath' }
+    get:
+      tags: [Cards]
+      summary: Get the balance of one of my cards (USER)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cardId:
+                    type: integer
+                    format: int64
+                  balance:
+                    type: number
+                    format: double
+                    example: 1250.50
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/cards/my/{id}/block-request:
+    parameters:
+      - { $ref: '#/components/parameters/IdPath' }
+    post:
+      tags: [Cards]
+      summary: Request blocking of one of my cards (USER)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Card
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CardResponse' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/cards/my/transfer:
+    post:
+      tags: [Cards]
+      summary: Transfer money between my own cards (USER)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TransferRequest' }
+      responses:
+        '204': { description: Transfer completed }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, default: 0 }
+    Size:
+      name: size
+      in: query
+      schema: { type: integer, default: 20 }
+    Sort:
+      name: sort
+      in: query
+      description: "Sort criteria: property,(asc|desc)"
+      schema: { type: string }
+    StatusFilter:
+      name: status
+      in: query
+      schema: { $ref: '#/components/schemas/CardStatus' }
+    SearchFilter:
+      name: search
+      in: query
+      description: Search by last four digits (substring match)
+      schema: { type: string }
+
+  responses:
+    BadRequest:
+      description: Validation error / malformed request
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Unauthorized:
+      description: Missing or invalid credentials / token
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Forbidden:
+      description: Authenticated but not allowed
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Conflict:
+      description: Uniqueness conflict
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    UnprocessableEntity:
+      description: Business rule violation
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  schemas:
+    Role:
+      type: string
+      enum: [ADMIN, USER]
+    CardStatus:
+      type: string
+      enum: [ACTIVE, BLOCKED, EXPIRED]
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string, example: admin }
+        password: { type: string, example: Admin12345 }
+    AuthResponse:
+      type: object
+      properties:
+        token: { type: string }
+        tokenType: { type: string, example: Bearer }
+        expiresInMs: { type: integer, format: int64, example: 3600000 }
+        username: { type: string }
+        role: { $ref: '#/components/schemas/Role' }
+    CreateUserRequest:
+      type: object
+      required: [username, password, role]
+      properties:
+        username: { type: string, minLength: 3, maxLength: 50 }
+        password: { type: string, minLength: 8, maxLength: 100 }
+        fullName: { type: string, maxLength: 150 }
+        role: { $ref: '#/components/schemas/Role' }
+    UpdateUserRequest:
+      type: object
+      properties:
+        fullName: { type: string, maxLength: 150 }
+        role: { $ref: '#/components/schemas/Role' }
+        enabled: { type: boolean }
+        password: { type: string, minLength: 8, maxLength: 100 }
+    UserResponse:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        username: { type: string }
+        fullName: { type: string }
+        role: { $ref: '#/components/schemas/Role' }
+        enabled: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    CreateCardRequest:
+      type: object
+      required: [cardNumber, ownerId, expiryDate]
+      properties:
+        cardNumber: { type: string, pattern: '^\d{13,19}$', example: '4111111111111111' }
+        ownerId: { type: integer, format: int64, example: 2 }
+        expiryDate: { type: string, format: date, example: '2030-12-31' }
+        initialBalance: { type: number, format: double, example: 1000.00 }
+    CardResponse:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        maskedNumber: { type: string, example: '**** **** **** 1111' }
+        ownerId: { type: integer, format: int64 }
+        ownerUsername: { type: string }
+        expiryDate: { type: string, format: date }
+        status: { $ref: '#/components/schemas/CardStatus' }
+        balance: { type: number, format: double }
+        createdAt: { type: string, format: date-time }
+    TransferRequest:
+      type: object
+      required: [fromCardId, toCardId, amount]
+      properties:
+        fromCardId: { type: integer, format: int64 }
+        toCardId: { type: integer, format: int64 }
+        amount: { type: number, format: double, example: 100.00 }
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp: { type: string, format: date-time }
+        status: { type: integer }
+        error: { type: string }
+        message: { type: string }
+        path: { type: string }
+        fieldErrors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              message: { type: string }
+    PageUserResponse:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          properties:
+            content:
+              type: array
+              items: { $ref: '#/components/schemas/UserResponse' }
+    PageCardResponse:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          properties:
+            content:
+              type: array
+              items: { $ref: '#/components/schemas/CardResponse' }
+    PageMeta:
+      type: object
+      properties:
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer, format: int64 }
+        totalPages: { type: integer }
+        last: { type: boolean }
