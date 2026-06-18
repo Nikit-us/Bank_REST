@@ -1,0 +1,34 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:bankrest;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        type:
+          preferred_instant_jdbc_type: TIMESTAMP
+        default_batch_fetch_size: 100
+
+  liquibase:
+    change-log: classpath:db/migration/db.changelog-master.yaml
+
+logging:
+  level:
+    com.example.bankcards: WARN
+    liquibase: WARN
+
+app:
+  jwt:
+    secret: dGVzdC1zZWNyZXQta2V5LWZvci1qd3QtdGhhdC1pcy1sb25nLWVub3VnaC0yNTY=
+    expiration-ms: 3600000
+    issuer: bank-rest
+  encryption:
+    password: test-encryption-password
+    salt: 58fccc618bb9c69c
+    hmac-key: aaIWNTXqFOQfOmtviW/qSQHjRbc4SBb2g4//wyKoBxw=

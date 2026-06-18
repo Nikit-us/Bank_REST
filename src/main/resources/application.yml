@@ -1,8 +1,60 @@
-#
-# application.yml — главный конфигурационный файл Spring Boot.
+spring:
+  application:
+    name: bank-rest
 
-Что нужно сделать:
-  - Указать настройки подключения к базе данных.
-  - Указать порт приложения.
-  - Настроить параметры безопасности и JWT.
-  - Включить Swagger UI.
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/bank_rest}
+    username: ${SPRING_DATASOURCE_USERNAME:bank}
+    password: ${SPRING_DATASOURCE_PASSWORD:bank}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        type:
+          preferred_instant_jdbc_type: TIMESTAMP
+        default_batch_fetch_size: 100
+    show-sql: false
+
+  liquibase:
+    change-log: classpath:db/migration/db.changelog-master.yaml
+
+server:
+  port: ${SERVER_PORT:8080}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    com.example.bankcards: INFO
+    org.springframework.security: INFO
+
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET:ltra1IMr5up2W4VzqL6HWU3d5fZu3PpbtHNg9E8hMisgotJR/Co1jFK+grFi2Dst}
+    expiration-ms: ${APP_JWT_EXPIRATION_MS:3600000}
+    issuer: bank-rest
+  encryption:
+    password: ${APP_ENCRYPTION_PASSWORD:nFHxHMEsXJOhrCUpYhI8o/9fNxCcCZ5F}
+    salt: ${APP_ENCRYPTION_SALT:58fccc618bb9c69c}
+    hmac-key: ${APP_ENCRYPTION_HMAC_KEY:aaIWNTXqFOQfOmtviW/qSQHjRbc4SBb2g4//wyKoBxw=}

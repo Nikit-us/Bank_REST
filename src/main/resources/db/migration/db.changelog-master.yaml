@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - include:
+      file: changes/001-create-users-table.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: changes/002-create-cards-table.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: changes/003-seed-users.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: changes/004-add-card-version.yaml
+      relativeToChangelogFile: true
